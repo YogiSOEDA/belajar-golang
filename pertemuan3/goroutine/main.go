@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
+	"time"
 )
 
 // import (
@@ -48,11 +50,14 @@ type Car struct {
 }
 
 func main() {
+	startedAt := time.Now()
 
 	fileCsv, err := os.Open("cars_500.csv")
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	defer fileCsv.Close()
 
 	reader := csv.NewReader(fileCsv)
 
@@ -61,15 +66,41 @@ func main() {
 		fmt.Println(err)
 	}
 
+
 	// fmt.Println(records[:2])
 	cars := csvToStruct(records)
 	// fmt.Println(cars[:2])
 
 	// fmt.Println(string(convertToJson(cars[1])))
+	
+	// encoded := convertToJson(cars[1])
+	
+	// saveJsonToFile(encoded, cars[1].ID)
+	
+	//menunggu goroutine
+	wg := sync.WaitGroup{}
 
-	encoded := convertToJson(cars[1])
+	for _, car := range cars {
+		wg.Add(1)
 
-	saveJsonToFile(encoded, cars[1].ID)
+		//goroutine cara 1
+		// go saveJsonToFile(convertToJson(car), car.ID)
+		
+		//goroutine cara 2 dengan anonymous function
+		go func (car Car, wg *sync.WaitGroup)  {
+			encoded := convertToJson(car)
+			saveJsonToFile(encoded, car.ID)
+
+			wg.Done()
+		}(car, &wg)
+	}
+
+	wg.Wait()
+
+	fmt.Println("Sukses")
+	fmt.Println(time.Since(startedAt))
+
+	// fileCsv.Close()
 }
 
 func csvToStruct(records [][]string) []Car {
