@@ -19,6 +19,8 @@ func main() {
 
 	app.Get("/cars", controllers.GetCars)
 
+	app.Get("/cars-go", controllers.GetCarsGo)
+
 	listenAddress := fmt.Sprintf("%s:%s", fiberConfig.GetFiberHttpHost(), fiberConfig.GetFiberHttpPort())
 
 	err := app.Listen(listenAddress)
